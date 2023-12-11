@@ -1,0 +1,54 @@
+module simple_cpu (
+    input wire clk,        // 时钟输入
+    input wire rst,        // 复位输入
+    input wire [7:0] instr,// 指令输入
+    input wire [7:0] data_in,// 数据输入
+    output reg [7:0] data_out // 数据输出
+);
+
+    reg [7:0] PC;          // 程序计数器
+    reg [7:0] IR;          // 指令寄存器
+    reg [7:0] reg_file [7:0]; // 寄存器文件
+    reg [7:0] alu_result;  // ALU 的结果
+
+    always @(posedge clk) begin
+        if (rst) begin
+            PC <= 0;
+            IR <= 0;
+            // 初始化寄存器文件
+            for (i = 0; i < 8; i = i + 1) begin
+                reg_file[i] <= 0;
+            end
+
+            data_out <= 0;
+        end else begin
+            // 从存储单元读取指令
+            IR <= instr;
+            // 从存储单元读取数据
+            data_out <= reg_file[data_in];
+            // 执行指令
+            case(IR[7:6])
+                2'b00: begin
+                    alu_result <= reg_file[IR[5:4]] + reg_file[IR[3:2]];
+                    reg_file[IR[1:0]] <= alu_result;
+                end
+                2'b01: begin
+                    alu_result <= reg_file[IR[5:4]] - reg_file[IR[3:2]];
+                    reg_file[IR[1:0]] <= alu_result;
+                end
+                2'b10: begin
+                    alu_result <= reg_file[IR[5:4]] & reg_file[IR[3:2]];
+                    reg_file[IR[1:0]] <= alu_result;
+                end
+                2'b11: begin
+                    alu_result <= reg_file[IR[5:4]] | reg_file[IR[3:2]];
+                    reg_file[IR[1:0]] <= alu_result;
+                end
+                default: begin
+                    // 在这里处理未定义的指令
+                end
+            endcase
+        end
+    end
+
+endmodule
